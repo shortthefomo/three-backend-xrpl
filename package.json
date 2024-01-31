@@ -1,0 +1,41 @@
+{
+  "name": "three-xrpl",
+  "version": "1.0.0",
+  "description": "Backend of threexrp",
+  "main": "./src/main.js",
+  "scripts": {
+    "build": "npm install --no-bin-links",
+    "dev": "DEBUG=threexrp* nodemon ./src/main.js",
+    "start": "DEBUG=threexrp*,-threexrp:xrpl:classifier node ./src/main.js"
+  },
+  "author": "Lathan Britz",
+  "license": "MIT",
+  "dependencies": {
+    "@turf/turf": "^6.3.0",
+    "apex-api": "^3.1.0",
+    "axios": "^0.21.1",
+    "d3-geo": "^3.0.1",
+    "debug": "^4.3.2",
+    "events": "^3.3.0",
+    "kucoin-websocket-api": "^0.2.3",
+    "mysql2": "^2.2.5",
+    "node-cache": "^5.1.2",
+    "node-coinfield-api": "^0.2.3",
+    "node-cron": "^3.0.0",
+    "node-gyp-build": "^4.2.3",
+    "node-gzip": "^1.1.2",
+    "nodemon": "^2.0.14",
+    "pako": "^2.0.4",
+    "path": "^0.12.7",
+    "pusher-js": "^7.0.3",
+    "ripple-lib": "*",
+    "socket.io": "^4.5.1",
+    "stats.js": "^0.17.0",
+    "websocket": "^1.0.34",
+    "ws": "^7.4.5",
+    "ws-events": "^1.0.0",
+    "xrpl-client": "^2.3.0",
+    "xumm-sdk": "^0.6.0",
+    "zlib": "^1.0.5"
+  }
+}

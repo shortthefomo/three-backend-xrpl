@@ -1,0 +1,7 @@
+node_modules
+yarn-error.log
+.vscode
+.clinic
+external-api-local.js
+package-lock.json
+.env
