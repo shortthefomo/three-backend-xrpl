@@ -79,8 +79,30 @@ class Ledger extends EventEmitter {
                         txCounter++
                         if (transaction.metaData.TransactionResult == 'tesSUCCESS') {
                             if (transaction.TransactionType == 'Payment') {
-                                // log('payment', transaction)
-                                self.classifyPayment(transaction)
+                                if (transaction?.Memos && transaction?.Memos[0]?.Memo.MemoType && transaction?.Memos[0]?.Memo.MemoFormat) {
+                                    const memoType = Buffer.from(transaction?.Memos[0]?.Memo.MemoType, 'hex').toString('utf8')
+                                    const MemoFormat = Buffer.from(transaction?.Memos[0]?.Memo.MemoFormat, 'hex').toString('utf8')
+                                    const MemoData = Buffer.from(transaction?.Memos[0]?.Memo.MemoData, 'hex').toString('utf8')
+                                    if (memoType === 'client' && MemoFormat.includes('rt')) {
+                                        log('MemoType', memoType)
+                                        log('MemoFormat', MemoFormat)
+                                        log('MemoData', MemoData)
+                                        log('payment', transaction)
+                                    }
+                                }
+                                
+                                const details = self.classifyPayment(transaction)
+                                if (details !== false && details.currency ==='XRP' && (details.delivered_amount > 1000)) {
+                                    if (details.source_name === false) {
+                                        details.source_name = transaction.Account
+                                    }
+
+                                    if (details.destination_name === false) {
+                                        details.destination_name = transaction.Destination
+                                    }
+                                    // log('details', details)
+                                    PubSubManager.route(details, 'exchange_payment')
+                                }
                                 self.classifyAccountPayment(transaction)
                                 paymentCounter++
                             }
@@ -179,16 +201,18 @@ class Ledger extends EventEmitter {
                 return false
             },
             classifyPayment(transaction) {
-                if (AddressData == null) { return }
-                let deliveredAmount = null
+                if (AddressData == null) { return false }
+                let deliveredAmount, currency
                 if (typeof transaction.metaData.delivered_amount == 'object') {
                     deliveredAmount = transaction.metaData.delivered_amount.value
+                    currency = this.currencyHexToUTF8(transaction.metaData.delivered_amount.currency)
                 }
                 else {
-                    deliveredAmount = transaction.metaData.delivered_amount
+                    deliveredAmount = transaction.metaData.delivered_amount / 1_000_000
+                    currency = 'XRP'
                 }
                 // log('deliveredAmount', deliveredAmount)
-                if (deliveredAmount == null) { return }
+                if (deliveredAmount === undefined) { return false }
                 
                 const source_info = this.classifyAddress(transaction.Account)
                 // log('source_info', source_info)
@@ -204,16 +228,16 @@ class Ledger extends EventEmitter {
                 }
 
                 // if source_name = destination_name throw away
-                if (source_name == destination_name) { return }
+                if (source_name == destination_name) { return false }
 
                 // if source_name or destination_name are not classified
-                if (source_name == false || destination_name == false) { return }
+                if (source_name == false || destination_name == false) { return {source_name, destination_name, delivered_amount: deliveredAmount, currency}}
 
                 // if source_name and destination_name are classified
                 if (source_name != false && destination_name != false) {
                     const record = this.getRecordInfo(transaction, source_info, destination_info)
                     this.interExchangePayment(record, source_info, destination_info)
-                    return
+                    return {source_name, destination_name, delivered_amount: deliveredAmount, currency}
                 }
             },
             classifyAddress(address) {
